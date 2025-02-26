@@ -105,6 +105,7 @@ object CommitCoordinatorProvider {
   }
 
   private val initialCommitCoordinatorBuilders = Seq[CommitCoordinatorBuilder](
+    UCCommitCoordinatorBuilder,
     new DynamoDBCommitCoordinatorClientBuilder()
   )
   initialCommitCoordinatorBuilders.foreach(registerBuilder)
