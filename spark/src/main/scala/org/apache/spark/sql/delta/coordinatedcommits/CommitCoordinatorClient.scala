@@ -100,6 +100,10 @@ object CommitCoordinatorProvider {
     nameToBuilderMapping.retain((k, _) => initialCommitCoordinatorNames.contains(k))
   }
 
+  private[delta] def clearAllBuilders(): Unit = synchronized {
+    nameToBuilderMapping.clear()
+  }
+
   private val initialCommitCoordinatorBuilders = Seq[CommitCoordinatorBuilder](
     new DynamoDBCommitCoordinatorClientBuilder()
   )

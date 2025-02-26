@@ -358,6 +358,43 @@ def run_pip_installation_tests(root_dir, version, use_testpypi, use_localpypi, e
             print("Failed pip installation tests in %s" % (test_file))
             raise
 
+def run_external_access_uc_managed_tables_integration_tests(root_dir, version, test_name, use_local, extra_packages):
+    print(
+        "\n\n##### Running External uc managed tables integration tests on version %s #####" % str(version)
+    )
+
+    if use_local:
+        clear_artifact_cache()
+        run_cmd(["build/sbt", "publishM2"])
+
+    test_dir = path.join(root_dir, \
+        path.join("spark", "src", "main", "java", "io", "delta", "commitcoordinator"))
+    test_files = [path.join(test_dir, f) for f in os.listdir(test_dir)
+                  if path.isfile(path.join(test_dir, f)) and
+                  f.endswith(".py") and not f.startswith("_")]
+
+    print("\n\nTests compiled\n\n")
+
+    python_root_dir = path.join(root_dir, "python")
+    extra_class_path = path.join(python_root_dir, path.join("delta", "testing"))
+    packages = "io.delta:delta-%s_2.12:%s" % (get_artifact_name(version), version)
+    if extra_packages:
+        packages += "," + extra_packages
+
+    for test_file in test_files:
+        if test_name is not None and test_name not in test_file:
+            print("\nSkipping External uc managed tables integration tests in %s\n============" % test_file)
+            continue
+        try:
+            cmd = ["spark-submit",
+                   "--driver-class-path=%s" % extra_class_path,  # for less verbose logging
+                   "--packages", packages] + [test_file]
+            print("\nRunning External uc managed tables integration tests in %s\n=============" % test_file)
+            print("Command: %s" % " ".join(cmd))
+            run_cmd(cmd, stream_output=True)
+        except:
+            print("Failed UC coordinated commitor integration tests in %s" % (test_file))
+            raise
 
 def clear_artifact_cache():
     print("Clearing Delta artifacts from ivy2 and mvn cache")
@@ -495,10 +532,10 @@ if __name__ == "__main__":
         action="store_true",
         help="Run the DynamoDB integration tests (and only them)")
     parser.add_argument(
-        "--dbb-packages",
+        "--packages",
         required=False,
         default=None,
-        help="Additional packages required for Dynamodb logstore integration tests")
+        help="Additional packages required for integration tests")
     parser.add_argument(
         "--dbb-conf",
         required=False,
@@ -544,6 +581,13 @@ if __name__ == "__main__":
         default="0.15.0",
         help="Hudi library version"
     )
+    parser.add_argument(
+        "--external-access-uc-managed-tables-integration-tests",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Run the External access to UC managed table tests (and only them)"
+    )
 
     args = parser.parse_args()
 
@@ -574,16 +618,21 @@ if __name__ == "__main__":
 
     if args.run_storage_s3_dynamodb_integration_tests:
         run_dynamodb_logstore_integration_tests(root_dir, args.version, args.test, args.maven_repo,
-                                                args.dbb_packages, args.dbb_conf, args.use_local)
+                                                args.packages, args.dbb_conf, args.use_local)
         quit()
 
     if args.run_dynamodb_commit_coordinator_integration_tests:
         run_dynamodb_commit_coordinator_integration_tests(root_dir, args.version, args.test, args.maven_repo,
-                                                    args.dbb_packages, args.dbb_conf, args.use_local)
+                                                    args.packages, args.dbb_conf, args.use_local)
         quit()
 
     if args.s3_log_store_util_only:
         run_s3_log_store_util_integration_tests()
+        quit()
+
+    if args.external_access_uc_managed_tables_integration_tests:
+        run_external_access_uc_managed_tables_integration_tests(root_dir, args.version, args.test, args.use_local,
+                                                                args.packages)
         quit()
 
     if run_scala:
