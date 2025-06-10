@@ -21,7 +21,7 @@ import org.apache.hadoop.fs.Path
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.connector.catalog.{CatalogNotFoundException, CatalogPlugin, Identifier, Table, V1Table}
+import org.apache.spark.sql.connector.catalog.{CatalogNotFoundException, CatalogPlugin, Identifier, V1Table}
 import org.apache.spark.sql.connector.catalog.CatalogV2Implicits.CatalogHelper
 import org.apache.spark.sql.connector.catalog.CatalogV2Implicits.MultipartIdentifierHelper
 
