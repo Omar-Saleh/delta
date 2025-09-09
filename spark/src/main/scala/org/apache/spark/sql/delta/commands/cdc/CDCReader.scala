@@ -176,7 +176,6 @@ object CDCReader extends CDCReaderImpl
         },
         sqlContext.sparkSession,
         readSchemaSnapshot = Some(snapshotForBatchSchema))
-
       // Rewrite the attributes in the required columns and pushed down filters to match the output
       // of the internal DataFrame.
       val outputMap = df.queryExecution.analyzed.output.map(a => a.name -> a).toMap
@@ -188,7 +187,6 @@ object CDCReader extends CDCReaderImpl
           .reduceOption(And)
           .getOrElse(Literal.TrueLiteral)
       )
-
       df.filter(filter).select(projections: _*).rdd
     }
   }
